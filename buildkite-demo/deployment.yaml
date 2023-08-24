@@ -1,0 +1,88 @@
+version: v1
+kind: kubernetes
+application: kals-app
+
+targets:
+  staging:
+    account: kals-kind-cluster
+    namespace: potato-facts-staging
+    strategy: rolling
+    constraints:
+      beforeDeployment:
+        - runWebhook:
+            name: Buildkite_API_Call
+        - pause:
+            duration: 10
+            unit: seconds        
+  prod:
+    account: kals-kind-cluster
+    namespace: potato-facts-prod
+    strategy: rolling
+    constraints:
+      dependsOn: ["staging"]
+      beforeDeployment:
+        - runWebhook:
+            name: Buildkite_API_Call
+        - pause:
+            untilApproved: true 
+
+manifests:
+  - path: https://raw.githubusercontent.com/armory-io/cdaas-examples/main/hello-armory/manifests/potato-facts-v1.yaml
+  - path: https://raw.githubusercontent.com/armory-io/cdaas-examples/main/hello-armory/manifests/potato-facts-service.yaml
+  - path: https://raw.githubusercontent.com/armory-io/cdaas-examples/main/hello-armory/manifests/staging-namespace.yaml
+    targets: ["staging"]
+  - path: https://raw.githubusercontent.com/armory-io/cdaas-examples/main/hello-armory/manifests/prod-namespace.yaml
+    targets: ["prod"]
+
+webhooks:
+  - name: Buildkite_API_Call
+    method: POST
+    uriTemplate: https://api.buildkite.com/v2/organizations/armory/pipelines/starter-pipeline/builds
+    networkMode: direct
+    disableCallback: true
+    headers:
+      - key: Authorization
+        value: Bearer bkua_197acf3b350650e02d0335d78941bb40a7a39dc6
+      - key: Content-Type
+        value: application/json
+    bodyTemplate:
+      inline:  >-
+        {
+            "commit": "bf46f7db3aa051ea3cab5ec8ad293c86d56cddeb",
+            "branch": "main",
+            "message": "Testing all the things :rocket:",
+            "author": {
+              "name": "Linux Canadian",
+              "email": "linux.canadian@gmail.com"
+            },
+            "env": {
+              "MY_ENV_VAR": "some_value"
+            },
+            "meta_data": {
+              "some build data": "value",
+              "other build data": true
+            }
+          }
+    retryCount: 3
+
+strategies:
+  rolling:
+    canary:
+      steps:
+        - setWeight:
+            weight: 100
+  trafficSplit:
+    canary:
+      steps:
+        - setWeight:
+            weight: 25
+        - exposeServices:
+            services:
+              - kal-service
+            ttl:
+              duration: 30
+              unit: minutes
+        - pause:
+            untilApproved: true
+        - setWeight:
+            weight: 100
