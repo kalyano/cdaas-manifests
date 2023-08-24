@@ -21,7 +21,6 @@ targets:
       beforeDeployment:
         - pause:
             untilApproved: true 
-      afterDeployment:
         - runWebhook:
             name: Buildkite_API_Call
 
