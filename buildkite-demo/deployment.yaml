@@ -8,9 +8,6 @@ targets:
     namespace: potato-facts-staging
     strategy: rolling
     constraints:
-      beforeDeployment:
-        - runWebhook:
-            name: Buildkite_API_Call
         - pause:
             duration: 10
             unit: seconds        
@@ -21,10 +18,11 @@ targets:
     constraints:
       dependsOn: ["staging"]
       beforeDeployment:
-        - runWebhook:
-            name: Buildkite_API_Call
         - pause:
             untilApproved: true 
+      afterDeployment:
+        - runWebhook:
+            name: Buildkite_API_Call
 
 manifests:
   - path: https://raw.githubusercontent.com/armory-io/cdaas-examples/main/hello-armory/manifests/potato-facts-v1.yaml
