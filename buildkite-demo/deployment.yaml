@@ -8,6 +8,7 @@ targets:
     namespace: potato-facts-staging
     strategy: rolling
     constraints:
+      beforeDeployment:
         - pause:
             duration: 10
             unit: seconds        
@@ -20,6 +21,7 @@ targets:
       beforeDeployment:
         - pause:
             untilApproved: true 
+      afterDeployment:
         - runWebhook:
             name: Buildkite_API_Call
 
