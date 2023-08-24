@@ -19,10 +19,10 @@ targets:
     constraints:
       dependsOn: ["staging"]
       beforeDeployment:
-        - pause:
-            untilApproved: true 
         - runWebhook:
             name: Buildkite_API_Call
+        - pause:
+            untilApproved: true 
 
 manifests:
   - path: https://raw.githubusercontent.com/armory-io/cdaas-examples/main/hello-armory/manifests/potato-facts-v1.yaml
