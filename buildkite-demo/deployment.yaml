@@ -4,7 +4,7 @@ application: kals-app
 
 targets:
   staging:
-    account: kals-kind-cluster
+    account: local-kind-cluster
     namespace: potato-facts-staging
     strategy: rolling
     constraints:
@@ -13,7 +13,7 @@ targets:
             duration: 10
             unit: seconds        
   prod:
-    account: kals-kind-cluster
+    account: local-kind-cluster
     namespace: potato-facts-prod
     strategy: rolling
     constraints:
