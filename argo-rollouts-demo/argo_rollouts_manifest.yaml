@@ -1,0 +1,221 @@
+version: v1
+kind: kubernetes
+application: kals-app
+
+targets:
+  # D-Line
+  d1-pqa:
+    account: local-kind-cluster
+    namespace: potato-facts-staging
+    strategy: rolling
+    constraints:
+      beforeDeployment:
+        - pause:
+            duration: 10
+            unit: seconds    
+  d1-sprint:
+    account: local-kind-cluster
+    namespace: potato-facts-staging
+    strategy: rolling
+    constraints:
+      beforeDeployment:
+        - pause:
+            duration: 10
+            unit: seconds
+  d1-pmgt:
+    account: local-kind-cluster
+    namespace: potato-facts-staging
+    strategy: rolling
+    constraints:
+      beforeDeployment:
+        - pause:
+            duration: 10
+            unit: seconds    
+  d1-np:
+    account: local-kind-cluster
+    namespace: potato-facts-staging
+    strategy: rolling
+    constraints:
+      beforeDeployment:
+        - pause:
+            duration: 10
+            unit: seconds
+
+  # Q-Line
+  q1-pqa:
+    account: local-kind-cluster
+    namespace: potato-facts-staging
+    strategy: rolling
+    constraints:
+      beforeDeployment:
+        - pause:
+            duration: 10
+            unit: seconds    
+  q1-sprint:
+    account: local-kind-cluster
+    namespace: potato-facts-staging
+    strategy: rolling
+    constraints:
+      beforeDeployment:
+        - pause:
+            duration: 10
+            unit: seconds
+  q1-pmgt:
+    account: local-kind-cluster
+    namespace: potato-facts-staging
+    strategy: rolling
+    constraints:
+      beforeDeployment:
+        - pause:
+            duration: 10
+            unit: seconds    
+  q1-np:
+    account: local-kind-cluster
+    namespace: potato-facts-staging
+    strategy: rolling
+    constraints:
+      beforeDeployment:
+        - pause:
+            duration: 10
+            unit: seconds
+
+  # E-Line
+  e1-pqa:
+    account: local-kind-cluster
+    namespace: potato-facts-staging
+    strategy: rolling
+    constraints:
+      beforeDeployment:
+        - pause:
+            duration: 10
+            unit: seconds    
+  e1-sprint:
+    account: local-kind-cluster
+    namespace: potato-facts-staging
+    strategy: rolling
+    constraints:
+      beforeDeployment:
+        - pause:
+            duration: 10
+            unit: seconds
+  e1-pmgt:
+    account: local-kind-cluster
+    namespace: potato-facts-staging
+    strategy: rolling
+    constraints:
+      beforeDeployment:
+        - pause:
+            duration: 10
+            unit: seconds    
+  e1-np:
+    account: local-kind-cluster
+    namespace: potato-facts-staging
+    strategy: rolling
+    constraints:
+      beforeDeployment:
+        - pause:
+            duration: 10
+            unit: seconds
+
+  # P-Line
+  p1-pqa:
+    account: local-kind-cluster
+    namespace: potato-facts-staging
+    strategy: rolling
+    constraints:
+      beforeDeployment:
+        - pause:
+            duration: 10
+            unit: seconds    
+  p1-sprint:
+    account: local-kind-cluster
+    namespace: potato-facts-staging
+    strategy: rolling
+    constraints:
+      beforeDeployment:
+        - pause:
+            duration: 10
+            unit: seconds
+  p1-pmgt:
+    account: local-kind-cluster
+    namespace: potato-facts-staging
+    strategy: rolling
+    constraints:
+      beforeDeployment:
+        - pause:
+            duration: 10
+            unit: seconds    
+
+  # P-Line PROD
+  p1-np-w2:
+   account: local-kind-cluster
+    namespace: potato-facts-prod
+    strategy: rolling
+    constraints:
+      dependsOn: ["p1-pqa"]
+      beforeDeployment:
+        - pause:
+            untilApproved: true 
+      afterDeployment:
+        - runWebhook:
+            name: Argo-WebHook
+
+  p1-np-e2:
+    account: local-kind-cluster
+    namespace: potato-facts-prod
+    strategy: rolling
+    constraints:
+      dependsOn: ["p1-pqa"]
+      beforeDeployment:
+        - pause:
+            untilApproved: true 
+      afterDeployment:
+        - runWebhook:
+            name: Argo-WebHook
+
+manifests:
+  - path: https://raw.githubusercontent.com/armory-io/cdaas-examples/main/hello-armory/manifests/potato-facts-v1.yaml
+  - path: https://raw.githubusercontent.com/armory-io/cdaas-examples/main/hello-armory/manifests/potato-facts-service.yaml
+  - path: https://raw.githubusercontent.com/armory-io/cdaas-examples/main/hello-armory/manifests/staging-namespace.yaml
+  - path: https://raw.githubusercontent.com/armory-io/cdaas-examples/main/hello-armory/manifests/prod-namespace.yaml
+    targets: ["p1-np-w2", "p1-np-e2"]
+
+webhooks:
+  # - name: Argo_Rollouts
+  #   method: POST
+  #   uriTemplate: <ARGO API URL HERE>
+  #   networkMode: direct
+  #   disableCallback: true
+  #   headers:
+  #     - key: Authorization
+  #       value: Bearer <TOKEN HERE>
+  #     - key: Content-Type
+  #       value: application/json
+  #   bodyTemplate:
+  #     inline:  >-
+  #       {
+  #            WEBHOOK CONTENT HERE
+  #       }
+  #   retryCount: 3
+
+strategies:
+  rolling:
+    canary:
+      steps:
+        - setWeight:
+            weight: 100
+  trafficSplit:
+    canary:
+      steps:
+        - setWeight:
+            weight: 25
+        - exposeServices:
+            services:
+              - kal-service
+            ttl:
+              duration: 30
+              unit: minutes
+        - pause:
+            untilApproved: true
+        - setWeight:
+            weight: 100
